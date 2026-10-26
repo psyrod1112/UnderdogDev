@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:17
-    container_name: postgres_pg
+    container_name: postgres_db
     restart: always
     environment:
       POSTGRES_USER: underdog_pg_user
@@ -12,7 +12,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: underdog_cache
+    container_name: redis_cache
     restart: always
     volumes:
       - redisdata:/data
@@ -26,10 +26,35 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
       - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/nginx/certs
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     depends_on:
       - postgres
       - redis
+      - code-server
+
+  code-server:
+    image: codercom/code-server:latest
+    container_name: code_server
+    restart: always
+    expose:
+      - "8080"
+    environment:
+      - PASSWORD=${CODESERVER_PASSWORD}  # 웹에서 접속할 때 입력할 비밀번호
+    volumes:
+      - ./workspace:/home/coder/project     # 현재 프로젝트 폴더를 컨테이너 내부로 마운트
+
+    command: ["--auth", "none"]
+
+  api:
+    build: ./backend
+    container_name: fastapi_app
+    restart: always
+    expose
+      - "8000"
 volumes:
   pgdata:
   redisdata:
