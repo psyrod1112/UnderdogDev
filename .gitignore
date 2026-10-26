@@ -1,4 +1,4 @@
 .env
 *.md
 *.pdf
-nginx/
+nginx/certs
